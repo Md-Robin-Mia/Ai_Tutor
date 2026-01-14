@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin API Test</title>
+</head>
+<body>
+    <h1>Admin API Test</h1>
+    <button onclick="testAPI()">Test API</button>
+    <div id="results"></div>
+
+    <script>
+        async function testAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Testing API...</p>';
+            
+            try {
+                // First login to get token
+                const loginResponse = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@example.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                console.log('Login response:', loginData);
+                
+                if (loginData.success && loginData.token) {
+                    resultsDiv.innerHTML += '<p>✅ Login successful</p>';
+                    
+                    // Test stats API
+                    const statsResponse = await fetch('/api/admin/dashboard/stats', {
+                        headers: {
+                            'Authorization': `Bearer ${loginData.token}`
+                        }
+                    });
+                    
+                    console.log('Stats response status:', statsResponse.status);
+                    console.log('Stats response ok:', statsResponse.ok);
+                    
+                    if (statsResponse.ok) {
+                        const statsData = await statsResponse.json();
+                        console.log('Stats data:', statsData);
+                        resultsDiv.innerHTML += `<p>✅ Stats API successful: ${JSON.stringify(statsData)}</p>`;
+                    } else {
+                        const errorText = await statsResponse.text();
+                        console.error('Stats API error:', errorText);
+                        resultsDiv.innerHTML += `<p>❌ Stats API failed: ${errorText}</p>`;
+                    }
+                } else {
+                    resultsDiv.innerHTML += `<p>❌ Login failed: ${JSON.stringify(loginData)}</p>`;
+                }
+                
+            } catch (error) {
+                console.error('Test error:', error);
+                resultsDiv.innerHTML += `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
